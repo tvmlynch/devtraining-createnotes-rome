@@ -1,0 +1,110 @@
+<?xml version="1.0" encoding="UTF-8"?><record_update table="sp_widget">
+    <sp_widget action="INSERT_OR_UPDATE">
+        <category>custom</category>
+        <client_script><![CDATA[function($scope,$rootScope) {
+	/* widget controller 
+		Examine the Client Script to make sure you understand what it does. Notice, in particular, 
+		that the script responds when the selectNote event is emitted. from the Notes List widget*/
+	var c = this;
+
+	$rootScope.$on('selectNote', function(event,data) { 
+		/*this.server.get() calls the Server script and passes custom input
+this.server.get() returns a promise. 
+When the response is received from the server, the .then() function logic executes.
+The ng-change directives in the HTML Template call updateNote(). You must add a function to the widget's 
+Client Script to handle the updates. The function must 
+specify the action name, pass necessary properties and values to the server so the updates 
+can be written to the database, and supply a callback function for the server.get().*/
+
+		c.server.get({
+			action: 'getNote',
+			noteID: $rootScope.noteID
+		}).then(function(r){ //r is what I am sending to the server script
+			c.data.title = r.data.note.title;
+			c.data.note = r.data.note.note;
+			c.data.noteID = r.data.note.sys_id;
+		});
+		console.log('Listener caught NoteID: ' + $rootScope.noteID); 
+	});
+
+	c.updateNote = function(updateType) {
+		c.server.get({
+			action: 'updateNote',
+			noteID: c.data.noteID,
+			noteBody: c.data.note,
+			noteTitle: c.data.title
+		}).then(function(r) {
+		});
+	}
+}]]></client_script>
+        <controller_as>c</controller_as>
+        <css/>
+        <data_table>sp_instance</data_table>
+        <demo_data/>
+        <description/>
+        <docs/>
+        <field_list/>
+        <has_preview>false</has_preview>
+        <id>notes_body</id>
+        <internal>false</internal>
+        <link><![CDATA[function link(scope, element, attrs, controller) {  }]]></link>
+        <name>Notes Body</name>
+        <option_schema/>
+        <public>false</public>
+        <roles/>
+        <script><![CDATA[(function() {
+	/* populate the 'data' object */
+	/* e.g., data.table = $sp.getValue('table'); 
+	In the Notes Body widget Server Script, write the logic to respond to the 
+	getNote action called from the Client Script.
+	Recall that the input object is the data object 
+	received from the Client Script's controller.
+	The Server Script must update the Notes record in the 
+	database using the new values received from the Client Script.
+	The input object is received from the Client Script
+The GlideRecord update() method writes new values for an existing record to the database
+*/
+
+	if (input && input.noteID) {
+		var note = new GlideRecord('x_snc_createnotes_note');
+		if (note.get(input.noteID)) {
+			if (input.action == 'getNote') {
+				data.note = {};
+				$sp.getRecordValues(data.note, note, "title, note, sys_id");
+			}
+			else if (input.action == 'updateNote') { 
+				note.title = input.noteTitle; 
+				note.note = input.noteBody; 
+				note.update(); 
+			}
+		}
+	}
+
+})();]]></script>
+        <servicenow>false</servicenow>
+        <sys_class_name>sp_widget</sys_class_name>
+        <sys_created_by>tricia.lynch</sys_created_by>
+        <sys_created_on>2021-10-08 12:55:01</sys_created_on>
+        <sys_id>5f3601022fc7b010b7da51172799b6f8</sys_id>
+        <sys_mod_count>6</sys_mod_count>
+        <sys_name>Notes Body</sys_name>
+        <sys_package display_value="CreateNotes" source="x_snc_createnotes">df5fd9a5090232007f44e1046c8ff69f</sys_package>
+        <sys_policy/>
+        <sys_scope display_value="CreateNotes">df5fd9a5090232007f44e1046c8ff69f</sys_scope>
+        <sys_update_name>sp_widget_5f3601022fc7b010b7da51172799b6f8</sys_update_name>
+        <sys_updated_by>tricia.lynch</sys_updated_by>
+        <sys_updated_on>2021-10-08 13:52:05</sys_updated_on>
+        <template><![CDATA[<div class="panel panel-default" ng-show="c.data.noteID">
+  <div class="panel-heading clearfix">
+    <div class="row">
+      <div class="col-md-12">
+        <input class="form-control" id="note-title" ng-model="c.data.title" ng-change="c.updateNote('title')" ng-model-options="{debounce: 1000}"/>
+      </div>
+    </div>
+  </div>
+  <div class="panel-body">
+    <textarea class="form-control" id="note-body" ng-model="c.data.note" ng-change="c.updateNote('body')" ng-model-options="{debounce: 1000}" ></textarea>
+  </div>
+</div>]]></template>
+    </sp_widget>
+</record_update>
